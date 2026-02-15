@@ -6,5 +6,5 @@ CXX_DEFINES = -Dmy_dl_framework_EXPORTS
 
 CXX_INCLUDES = -isystem /usr/include/python3.12 -isystem /usr/include/opencv4
 
-CXX_FLAGS = -std=gnu++17 -fPIC -fvisibility=hidden -O3 -flto -fno-fat-lto-objects
+CXX_FLAGS = -std=gnu++17 -fPIC -fvisibility=hidden -O3 -march=native -ffast-math -flto -fno-fat-lto-objects
 

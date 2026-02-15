@@ -17,6 +17,7 @@ class Tensor{
 public:
     std::vector<float> data;
     std::vector<float> grad;
+    std::vector<float> velocity; 
     std::vector<int> shape;
     bool requires_grad;
 
@@ -49,7 +50,6 @@ public:
 
     void save(const std::string& path){
         std::ofstream out(path,std::ios::binary);
-        if(!out.is_open())throw std::runtime_error("Could not open file for saving: "+path);
         int ndim=shape.size();
         out.write(reinterpret_cast<const char*>(&ndim),sizeof(int));
         out.write(reinterpret_cast<const char*>(shape.data()),ndim*sizeof(int));
@@ -59,7 +59,6 @@ public:
 
     void load(const std::string& path){
         std::ifstream in(path,std::ios::binary);
-        if(!in.is_open())throw std::runtime_error("Could not open file for loading: "+path);
         int ndim;
         in.read(reinterpret_cast<char*>(&ndim),sizeof(int));
         std::vector<int> loaded_shape(ndim);
@@ -321,33 +320,53 @@ Tensor batch_tensors(const std::vector<Tensor>& batch){
     return out;
 }
 
-float cross_entropy_loss(const Tensor& logits,const std::vector<int>& targets,Tensor& grad_input){
-    int N=logits.shape[0];
-    int C=logits.shape[1];
-    grad_input=logits;grad_input.zero_grad();
-    float loss=0;
-    for(int n=0;n<N;++n){
-        float max_l=-1e9;
-        for(int c=0;c<C;++c)max_l=std::max(max_l,logits.data[n*C+c]);
-        float sum=0;
+float cross_entropy_loss(const Tensor& logits, const std::vector<int>& targets, Tensor& grad_input) {
+    int N = logits.shape[0];
+    int C = logits.shape[1];
+    grad_input = logits; grad_input.zero_grad();
+    float loss = 0;
+
+    for (int n = 0; n < N; ++n) {
+        float max_l = -1e9;
+        for (int c = 0; c < C; ++c) max_l = std::max(max_l, logits.data[n * C + c]);
+        float sum = 0;
         std::vector<float> exps(C);
-        for(int c=0;c<C;++c){exps[c]=std::exp(logits.data[n*C+c]-max_l);sum+=exps[c];}
-        loss+=-std::log(exps[targets[n]]/sum);
-        for(int c=0;c<C;++c){
-            float s=exps[c]/sum;
-            grad_input.data[n*C+c]=(c==targets[n]?s-1:s)/N;
+        for (int c = 0; c < C; ++c) { 
+            exps[c] = std::exp(logits.data[n * C + c] - max_l); 
+            sum += exps[c]; 
+        }
+        
+        // FIX: Added 1e-7f to prevent log(0) which causes 'inf'
+        float prob = exps[targets[n]] / sum;
+        loss += -std::log(prob + 1e-7f); 
+
+        for (int c = 0; c < C; ++c) {
+            float s = exps[c] / sum;
+            grad_input.data[n * C + c] = (c == targets[n] ? s - 1 : s) / N;
         }
     }
-    return loss/N;
+    return loss / N;
 }
 
-class SGD{
+class SGD {
     float lr;
+    float momentum;
 public:
-    SGD(float l):lr(l){}
-    void step(Tensor& w,Tensor& b){
-        for(size_t i=0;i<w.data.size();++i){w.data[i]-=lr*w.grad[i];w.grad[i]=0;}
-        for(size_t i=0;i<b.data.size();++i){b.data[i]-=lr*b.grad[i];b.grad[i]=0;}
+    SGD(float l, float m=0.9f) : lr(l), momentum(m) {}
+
+    void step(Tensor& w, Tensor& b) {
+        if (w.velocity.empty()) w.velocity.resize(w.data.size(), 0.0f);
+        for (size_t i = 0; i < w.data.size(); ++i) {
+            w.velocity[i] = momentum * w.velocity[i] - lr * w.grad[i];
+            w.data[i] += w.velocity[i];
+            w.grad[i] = 0;
+        }
+        if (b.velocity.empty()) b.velocity.resize(b.data.size(), 0.0f);
+        for (size_t i = 0; i < b.data.size(); ++i) {
+            b.velocity[i] = momentum * b.velocity[i] - lr * b.grad[i];
+            b.data[i] += b.velocity[i];
+            b.grad[i] = 0;
+        }
     }
 };
 
@@ -405,6 +424,6 @@ PYBIND11_MODULE(my_dl_framework,m){
         .def_readwrite("params",&Linear::params);
 
     py::class_<SGD>(m,"SGD")
-        .def(py::init<float>())
+        .def(py::init<float, float>(), py::arg("lr"), py::arg("momentum")=0.9f)
         .def("step",&SGD::step);
 }
