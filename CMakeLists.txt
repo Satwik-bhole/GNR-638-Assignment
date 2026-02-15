@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.10)
+project(my_dl_framework)
+add_compile_options(-O3)
+set(CMAKE_CXX_STANDARD 17)
+find_package(OpenCV REQUIRED)
+find_package(pybind11 REQUIRED)
+pybind11_add_module(my_dl_framework backend.cpp)
+target_link_libraries(my_dl_framework PRIVATE ${OpenCV_LIBS})

@@ -1,0 +1,3 @@
+/home/satwik/GNR-638-Assignment/build/CMakeFiles/my_dl_framework.dir
+/home/satwik/GNR-638-Assignment/build/CMakeFiles/edit_cache.dir
+/home/satwik/GNR-638-Assignment/build/CMakeFiles/rebuild_cache.dir
