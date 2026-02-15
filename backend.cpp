@@ -13,6 +13,7 @@
 namespace py=pybind11;
 namespace fs=std::filesystem;
 
+// Multi-dimensional tensor with support for gradients
 class Tensor{
 public:
     std::vector<float> data;
@@ -28,6 +29,7 @@ public:
         if(requires_grad)grad.resize(size,0.0f);
     }
 
+    // Access element in 4D tensor (batch, channel, height, width)
     float& at(int n,int c,int h,int w){
         int idx=n*(shape[1]*shape[2]*shape[3])+c*(shape[2]*shape[3])+h*shape[3]+w;
         return data[idx];
@@ -36,11 +38,13 @@ public:
         int idx=n*(shape[1]*shape[2]*shape[3])+c*(shape[2]*shape[3])+h*shape[3]+w;
         return data[idx];
     }
+    // Access element in 2D tensor (batch, feature)
     float& at(int n,int d){return data[n*shape[1]+d];}
     const float& at(int n,int d)const{return data[n*shape[1]+d];}
 
     void zero_grad(){std::fill(grad.begin(),grad.end(),0.0f);}
 
+    // Initialize weights using Xavier uniform distribution
     void xavier_init(){
         std::default_random_engine generator;
         float limit=sqrt(6.0f/(float)data.size());
@@ -48,6 +52,7 @@ public:
         for(auto& val:data)val=distribution(generator);
     }
 
+    // Save tensor to binary file
     void save(const std::string& path){
         std::ofstream out(path,std::ios::binary);
         int ndim=shape.size();
@@ -57,6 +62,7 @@ public:
         out.close();
     }
 
+    // Load tensor from binary file
     void load(const std::string& path){
         std::ifstream in(path,std::ios::binary);
         int ndim;
@@ -73,12 +79,14 @@ public:
     }
 };
 
+// Holds images, labels, and class names for a dataset
 struct Dataset{
     std::vector<Tensor> images;
     std::vector<int> labels;
     std::vector<std::string> class_names;
 };
 
+// Load images from directory, resize to 32x32, normalize to [0,1]
 Dataset load_dataset_cpp(const std::string& path){
     Dataset ds;
     int label_idx=0;
@@ -108,6 +116,7 @@ Dataset load_dataset_cpp(const std::string& path){
     return ds;
 }
 
+// 2D convolution layer
 class Conv2D{
 public:
     int in_c,out_c,k_size,stride,padding;
@@ -119,6 +128,7 @@ public:
         weights.xavier_init();
         params=weights.data.size()+bias.data.size();
     }
+    // Forward pass: apply convolution filters on input
     Tensor forward(const Tensor& input){
         input_cache=input;
         int N=input.shape[0];
@@ -150,6 +160,7 @@ public:
         }
         return output;
     }
+    // Backward pass: compute gradients for weights, bias, and input
     Tensor backward(const Tensor& grad_output){
         Tensor grad_input(input_cache.shape,false);
         int N=input_cache.shape[0];
@@ -184,6 +195,7 @@ public:
     }
 };
 
+// 2D max pooling layer
 class MaxPool2D{
     int k_size,stride;
     Tensor input_cache;
@@ -230,6 +242,7 @@ public:
     }
 };
 
+// ReLU activation: max(0, x)
 class ReLU{
     Tensor input_cache;
 public:
@@ -249,6 +262,7 @@ public:
     }
 };
 
+// Fully connected layer
 class Linear{
 public:
     int in_f,out_f;
@@ -290,6 +304,7 @@ public:
     }
 };
 
+// Flatten multi-dimensional input into 2D (batch, features)
 class Flatten{
     std::vector<int> input_shape;
 public:
@@ -310,6 +325,7 @@ public:
     }
 };
 
+// Combine multiple tensors into a single batched tensor
 Tensor batch_tensors(const std::vector<Tensor>& batch){
     if(batch.empty())return Tensor({0});
     int N=batch.size();
@@ -320,6 +336,7 @@ Tensor batch_tensors(const std::vector<Tensor>& batch){
     return out;
 }
 
+// Compute cross-entropy loss and its gradient
 float cross_entropy_loss(const Tensor& logits, const std::vector<int>& targets, Tensor& grad_input) {
     int N = logits.shape[0];
     int C = logits.shape[1];
@@ -327,18 +344,19 @@ float cross_entropy_loss(const Tensor& logits, const std::vector<int>& targets, 
     float loss = 0;
 
     for (int n = 0; n < N; ++n) {
+        // Subtract max for numerical stability
         float max_l = -1e9;
         for (int c = 0; c < C; ++c) max_l = std::max(max_l, logits.data[n * C + c]);
         float sum = 0;
         std::vector<float> exps(C);
+        // Compute softmax probabilities
         for (int c = 0; c < C; ++c) { 
             exps[c] = std::exp(logits.data[n * C + c] - max_l); 
             sum += exps[c]; 
         }
         
-        // FIX: Added 1e-7f to prevent log(0) which causes 'inf'
         float prob = exps[targets[n]] / sum;
-        loss += -std::log(prob + 1e-7f); 
+        loss += -std::log(prob + 1e-7f); // epsilon to prevent log(0) 
 
         for (int c = 0; c < C; ++c) {
             float s = exps[c] / sum;
@@ -348,12 +366,14 @@ float cross_entropy_loss(const Tensor& logits, const std::vector<int>& targets, 
     return loss / N;
 }
 
+// SGD optimizer with momentum
 class SGD {
     float lr;
     float momentum;
 public:
     SGD(float l, float m=0.9f) : lr(l), momentum(m) {}
 
+    // Update weights and biases using momentum
     void step(Tensor& w, Tensor& b) {
         if (w.velocity.empty()) w.velocity.resize(w.data.size(), 0.0f);
         for (size_t i = 0; i < w.data.size(); ++i) {
@@ -370,6 +390,7 @@ public:
     }
 };
 
+// Expose classes and functions to Python via pybind11
 PYBIND11_MODULE(my_dl_framework,m){
     py::class_<Tensor>(m,"Tensor")
         .def(py::init<std::vector<int>,bool>(),py::arg("shape"),py::arg("requires_grad")=false)

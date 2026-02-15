@@ -3,8 +3,9 @@ import os
 import time
 import my_dl_framework as nn
 
-BATCH_SIZE = 64  # Updated to match train.py
+BATCH_SIZE = 64
 
+# Load saved weights from disk into model layers
 def load_model_weights(layers, load_path):
     if not os.path.exists(load_path):
         print(f"Error: Directory {load_path} not found.")
@@ -21,28 +22,25 @@ def load_model_weights(layers, load_path):
 
 def main(test_path, load_path):
     print(f"Loading TEST data from {test_path}...")
-    # [cite_start]Requirement: Measure and report dataset loading time [cite: 39, 40, 102]
     load_start = time.time()
     dataset = nn.load_dataset(test_path)
     num_classes = len(dataset.class_names)
     print(f"Dataset Loading Time: {time.time() - load_start:.4f} seconds")
 
-    # [cite_start]Architecture MUST match train.py exactly [cite: 42-46, 99]
-    # Input: 3x32x32
+    # Define model architecture (must match train.py)
     conv1 = nn.Conv2D(3, 16, 3, 1, 1)    
     relu1 = nn.ReLU()
-    pool1 = nn.MaxPool2D(2, 2)           # Output: 16x16x16
+    pool1 = nn.MaxPool2D(2, 2)
     
     conv2 = nn.Conv2D(16, 32, 3, 1, 1)   
     relu2 = nn.ReLU()
-    pool2 = nn.MaxPool2D(2, 2)           # Output: 32x8x8
+    pool2 = nn.MaxPool2D(2, 2)
     
     flat = nn.Flatten()
     fc = nn.Linear(32 * 8 * 8, num_classes) 
     
     layers = [conv1, relu1, pool1, conv2, relu2, pool2, flat, fc]
 
-    # [cite_start]Requirement: Report total trainable parameters [cite: 47, 100]
     total_params = sum(l.params for l in layers if hasattr(l, 'params'))
     print(f"Total Model Parameters: {total_params}")
 
@@ -60,19 +58,20 @@ def main(test_path, load_path):
         batch_imgs = [dataset.images[k] for k in range(i, batch_end)]
         batch_lbls = [dataset.labels[k] for k in range(i, batch_end)]
         
-        # Requirement: Support batching during evaluation 
         x = nn.batch_tensors(batch_imgs)
         
+        # Forward pass
         out = x
         for l in layers:
             out = l.forward(out)
             
-        # [cite_start]Requirement: Print MACs during evaluation [cite: 48, 101]
+        # Print MACs once after first batch
         if not metrics_printed:
             macs_val = sum(l.macs for l in layers if hasattr(l, 'macs')) // len(batch_imgs)
             print(f"MACs per forward pass (per sample): {macs_val}")
             metrics_printed = True
             
+        # Compare predictions with ground truth
         logits = out.data
         for b in range(len(batch_imgs)):
             sample_logits = logits[b * num_classes : (b + 1) * num_classes]
@@ -80,11 +79,10 @@ def main(test_path, load_path):
             if pred == batch_lbls[b]:
                 correct += 1
         
-        # Simple progress tracking
         if (i // BATCH_SIZE) % 10 == 0:
             print(f"Processed {batch_end}/{total} samples...", end='\r')
 
-    # [cite_start]Requirement: Evaluation metrics [cite: 103]
+    # Compute final accuracy
     acc = correct / total
     print(f"\nEvaluation Time: {time.time() - eval_start:.2f} seconds")
     print(f"Test Accuracy: {acc * 100:.2f}%")

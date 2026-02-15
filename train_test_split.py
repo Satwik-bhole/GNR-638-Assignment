@@ -3,17 +3,11 @@ import shutil
 import random
 import sys
 
-# --- CONFIGURATION: Folder Names ---
 TRAIN_DIR_NAME = 'Train'
 TEST_DIR_NAME = 'Test'
-# -----------------------------------
 
+# Move images from split folders back to root before re-splitting
 def merge_folders(data_path):
-    """
-    Moves images from ANY previous split folders back to the main data_path.
-    """
-    # SAFETY UPDATE: Removed 'train' and 'test' (lowercase) from this list 
-    # so the script NEVER touches your class folders named 'train' or 'test'.
     possible_folders = [
         TRAIN_DIR_NAME, TEST_DIR_NAME, 
     ]
@@ -53,16 +47,16 @@ def merge_folders(data_path):
 
     print("Merge complete. Ready to re-split.")
 
+# Split dataset into Train and Test folders by ratio
 def split_dataset(data_path, split_ratio=0.8):
     if not os.path.exists(data_path):
         print(f"Error: Path '{data_path}' does not exist.")
         return
 
-    # 1. RESET
+    # Reset any previous splits
     merge_folders(data_path)
 
-    # 2. SPLIT
-    # We exclude the Split Folders (Train/Test) but NOT the class folders (train/test)
+    # Find all class folders, exclude split directories
     excluded_names = [TRAIN_DIR_NAME, TEST_DIR_NAME, 'train_set', 'test_set']
     
     classes = [d for d in os.listdir(data_path) 
@@ -86,6 +80,7 @@ def split_dataset(data_path, split_ratio=0.8):
         class_path = os.path.join(data_path, class_name)
         images = [f for f in os.listdir(class_path) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp'))]
         
+        # Shuffle and split images
         random.shuffle(images)
         
         split_idx = int(len(images) * split_ratio)
