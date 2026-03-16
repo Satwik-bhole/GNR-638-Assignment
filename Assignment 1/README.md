@@ -23,7 +23,8 @@ pip install pybind11 cmake
 # ==========================================================
 # STEP 1: Train/Test Split
 # ==========================================================
-python train_test_split.py data
+python3 train_test_split.py data_1
+python3 train_test_split.py data_2
 
 # ==========================================================
 # STEP 2: Build the C++ Backend with CMake
@@ -47,5 +48,5 @@ python3 train.py data_2/Train weights/set_2
 # ==========================================================
 # STEP 4: Evaluate the Model
 # ==========================================================
-python eval.py data_1/Test weights/set_1
-python eval.py data_2/Test weights/set_2
+python3 eval.py data_1/Test weights/set_1
+python3 eval.py data_2/Test weights/set_2
