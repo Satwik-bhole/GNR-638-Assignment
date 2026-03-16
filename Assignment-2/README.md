@@ -5,14 +5,14 @@
 **Author:** Satwik Pradip Bhole (24B2498) Divyaansh Narkhede (24B0981)
 
 ## Overview
-[cite_start]This repository contains the implementation for systematically analyzing representation transfer, fine-tuning strategies, few-shot data efficiency, and corruption robustness of pre-trained CNN architectures[cite: 7]. 
+This repository contains the implementation for systematically analyzing representation transfer, fine-tuning strategies, few-shot data efficiency, and corruption robustness of pre-trained CNN architectures. 
 
-[cite_start]The experiments compare three pre-trained backbones[cite: 24]:
-1. [cite_start]**ResNet50** [cite: 25]
-2. [cite_start]**DenseNet121** [cite: 28]
-3. [cite_start]**EfficientNet-B0** [cite: 29]
+The experiments compare three pre-trained backbones:
+1. **ResNet50** 
+2. **DenseNet121**
+3. **EfficientNet-B0**
 
-[cite_start]The models are evaluated on the **Aerial Images Dataset (AID)**  [cite_start]under various controlled scenarios, including linear probing, fractional data training, layer-wise probing, and inference-time distribution shifts (Gaussian noise, motion blur, brightness)[cite: 41, 68, 82, 97].
+The models are evaluated on the **Aerial Images Dataset (AID)** under various controlled scenarios, including linear probing, fractional data training, layer-wise probing, and inference-time distribution shifts (Gaussian noise, motion blur, brightness).
 
 ## Repository Structure
 ```text
