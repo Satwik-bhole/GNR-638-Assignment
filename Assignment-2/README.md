@@ -52,6 +52,8 @@ Place the downloaded Aerial Images Dataset (AID) into a `data/` directory in the
 **Method 1: Interactive Execution (Jupyter Notebook)**
 Launch the notebook server from your terminal:
 
+    run using run all command of notebook
+    or use 
     jupyter notebook
 
 Open `GNR638_Assignment2.ipynb` in your browser, check that the dataset path variable points to your `train_data/` folder, and click **Kernel > Restart & Run All**.
