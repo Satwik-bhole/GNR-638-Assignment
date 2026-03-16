@@ -40,9 +40,12 @@ cd ..
 # ==========================================================
 # STEP 3: Train the Model
 # ==========================================================
-python train.py data/Train weights/set
+python3 train.py data_1/Train weights/set_1
+python3 train.py data_2/Train weights/set_2
+
 
 # ==========================================================
 # STEP 4: Evaluate the Model
 # ==========================================================
-python eval.py data/Test weights/set
+python eval.py data_1/Test weights/set_1
+python eval.py data_2/Test weights/set_2
