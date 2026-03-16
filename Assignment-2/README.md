@@ -2,7 +2,7 @@
 # GNR638: Coding Assignment-2
 ## Pre-trained CNN Representation Transfer and Robustness Analysis
 
-**Author:** Satwik Pradip Bhole (24B2498)
+**Author:** Satwik Pradip Bhole (24B2498) Divyaansh Narkhede (24B0981)
 
 ## Overview
 [cite_start]This repository contains the implementation for systematically analyzing representation transfer, fine-tuning strategies, few-shot data efficiency, and corruption robustness of pre-trained CNN architectures[cite: 7]. 
