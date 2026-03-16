@@ -21,7 +21,7 @@ The models are evaluated on the Aerial Images Dataset (AID) under various contro
     ├── requirements.txt            # Python dependencies
     ├── README.md                   # Setup and execution instructions
     ├── report.pdf                  # Final 8-12 page technical report
-    └── data/                       # Directory for the AID dataset (ignored in version control)
+    └── train_data/                       # Directory for the AID dataset (ignored in version control)
 
 ## Setup and Execution Instructions
 
@@ -42,7 +42,7 @@ It is highly recommended to use a virtual environment with Python 3.12:
 ### 3. Prepare the Dataset
 Place the downloaded Aerial Images Dataset (AID) into a `data/` directory in the root of the project so it looks like this:
 
-    data/
+    train_data/
     ├── Airport/
     ├── BareLand/
     ...
